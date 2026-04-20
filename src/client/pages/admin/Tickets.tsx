@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Loader2, CheckCircle2, Clock, Trash2, Phone, Mail } from 'lucide-react';
+import { Search, Loader2, CheckCircle2, Clock, Trash2, Phone, Mail, Send } from 'lucide-react';
 import api from '@/client/lib/api';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
 const AdminTickets = () => {
   const queryClient = useQueryClient();
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
+
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['admin-tickets'],
     queryFn: async () => {
@@ -15,31 +19,39 @@ const AdminTickets = () => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string, status: string }) => api.patch(`/contact/${id}`, { status }),
+    mutationFn: ({ id, status, replyMessage }: { id: string, status: string, replyMessage?: string }) =>
+      api.patch(`/contact/${id}`, { status, replyMessage }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tickets'] });
-      toast.success('Ticket status updated!');
+      toast.success('Ticket resolved and reply sent!');
+      setReplyingTo(null);
+      setReplyMessage('');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to update ticket');
+      toast.error(err.response?.data?.message || 'Failed to resolve ticket');
     }
   });
 
   const deleteTicketMutation = useMutation({
     mutationFn: (id: string) => {
-      console.log('FRONTEND - ATTEMPTING DELETE:', id);
       return api.delete(`/contact/${id}`);
     },
-    onSuccess: (data: any) => {
-      console.log('FRONTEND - DELETE SUCCESS:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tickets'] });
       toast.success('Ticket deleted.');
     },
     onError: (err: any) => {
-      console.error('FRONTEND - DELETE FAILED:', err);
       toast.error(err.response?.data?.message || 'Failed to delete ticket');
     }
   });
+
+  const handleResolve = (ticketId: string) => {
+    if (!replyMessage.trim()) {
+      toast.error('Please enter a reply message.');
+      return;
+    }
+    updateStatusMutation.mutate({ id: ticketId, status: 'resolved', replyMessage });
+  };
 
   if (isLoading) return <div className="h-full flex items-center justify-center text-primary animate-spin"><Loader2 size={40} /></div>;
 
@@ -75,7 +87,7 @@ const AdminTickets = () => {
           <tbody className="divide-y divide-slate-50">
             {Array.isArray(tickets) && tickets.map((ticket: any) => (
               <tr key={ticket._id} className="hover:bg-slate-50 transition-colors group">
-                <td className="px-8 py-6">
+                <td className="px-8 py-6 align-top">
                   <div className="space-y-1">
                     <div className="font-bold text-slate-900">{ticket.name}</div>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -86,10 +98,47 @@ const AdminTickets = () => {
                     </div>
                   </div>
                 </td>
-                <td className="px-8 py-6 max-w-md">
-                  <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed font-medium">{ticket.message}</p>
+                <td className="px-8 py-6 max-w-md align-top">
+                  <p className="text-sm text-slate-600 leading-relaxed font-medium mb-4">{ticket.message}</p>
+
+                  <AnimatePresence>
+                    {replyingTo === ticket._id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-4"
+                      >
+                        <textarea
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          placeholder="Type your reply to the customer..."
+                          className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyMessage('');
+                            }}
+                            className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleResolve(ticket._id)}
+                            disabled={updateStatusMutation.isPending}
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-primary text-white rounded-xl hover:bg-secondary transition-colors disabled:opacity-50"
+                          >
+                            {updateStatusMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            Send & Resolve
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </td>
-                <td className="px-8 py-6">
+                <td className="px-8 py-6 align-top">
                   <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 w-fit ${
                     ticket.status === 'resolved' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
                   }`}>
@@ -97,16 +146,19 @@ const AdminTickets = () => {
                     {ticket.status}
                   </span>
                 </td>
-                <td className="px-8 py-6 text-sm text-slate-400 font-medium">
+                <td className="px-8 py-6 text-sm text-slate-400 font-medium align-top">
                   {new Date(ticket.createdAt).toLocaleDateString()}
                 </td>
-                <td className="px-8 py-6 text-right">
+                <td className="px-8 py-6 text-right align-top">
                   <div className="flex items-center justify-end gap-2">
-                    {ticket.status !== 'resolved' && (
+                    {ticket.status !== 'resolved' && replyingTo !== ticket._id && (
                       <button 
-                        disabled={updateStatusMutation.isPending}
-                        onClick={() => updateStatusMutation.mutate({ id: ticket._id, status: 'resolved' })}
-                        className="bg-primary text-white p-2 rounded-xl hover:bg-secondary transition-all disabled:opacity-50"
+                        onClick={() => {
+                          setReplyingTo(ticket._id);
+                          setReplyMessage('');
+                        }}
+                        className="bg-primary text-white p-2 rounded-xl hover:bg-secondary transition-all"
+                        title="Reply and Resolve"
                       >
                         <CheckCircle2 size={18} />
                       </button>
@@ -118,7 +170,8 @@ const AdminTickets = () => {
                           deleteTicketMutation.mutate(ticket._id);
                         }
                       }}
-                      className="text-slate-200 hover:text-red-500 transition-colors p-2 disabled:opacity-50"
+                      className="text-slate-400 hover:text-red-500 transition-colors p-2 disabled:opacity-50"
+                      title="Delete Ticket"
                     >
                       <Trash2 size={18} />
                     </button>
