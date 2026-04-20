@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00E5FF;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #00B8D4;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 font-sans;
+}
+
+.glass {
+  @apply backdrop-blur-md bg-white/70 border-b border-white/20 sticky top-0 z-50;
+}
