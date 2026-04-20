@@ -28,24 +28,33 @@ npm install --legacy-peer-deps
 ```
 
 ### 3. Environment Setup
-Create a `.env` file in the root directory and add the following variables:
+Create a `.env` file in the root directory (you can copy `.env.example`) and configure your variables:
 
 ```env
+# Server Configuration
+PORT=5000
 MONGODB_URI=mongodb://localhost:27017/whizpoint
 JWT_SECRET=your_secure_random_jwt_secret
-CLOUDINARY_CLOUD_NAME=dbcqnyavk
-CLOUDINARY_API_KEY=771598969942895
-CLOUDINARY_API_SECRET=Tu25seMFJTDpey8xUrc8gT6lmFI
-BREVO_SMTP_HOST=smtp-relay.brevo.com
-BREVO_SMTP_PORT=587
-BREVO_SMTP_USER=a4ded8001@smtp-brevo.com
-BREVO_SMTP_PASS=xsmtpsib-xxxxxxxxxxxxxxxxxx-KBNuTpx6HBe2HHw2
+
+# Admin Configuration
+ADMIN_EMAIL=admin@twoem.com
+ADMIN_PASSWORD=Pass123
+
+# Cloudinary Configuration
+CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
+# OR use individual parts:
+# CLOUDINARY_CLOUD_NAME=your_cloud_name
+# CLOUDINARY_API_KEY=your_api_key
+# CLOUDINARY_API_SECRET=your_api_secret
+
+# Email Configuration (SMTP)
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
 EMAIL_FROM=admin@whizpoint.app
 EMAIL_FROM_NAME=TWOEM FIBRE NETWORK
 REPLY_TO=twoem@whizpoint.app
-
-ADMIN_EMAIL=admin@twoem.com
-ADMIN_PASSWORD=Pass123
 ```
 
 ### 4. Running the Project
