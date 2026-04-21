@@ -9,6 +9,7 @@ class EmailService {
     
     // We will use standard nodemailer configuration with environment variables
     // No hardcoded hosts. If not provided, it fails gracefully.
+    // Use family: 4 to force IPv4 to prevent ECONNREFUSED ::1 issues
     this.transporter = nodemailer.createTransport({
       host: config.email.host,
       port: config.email.port,
@@ -17,6 +18,9 @@ class EmailService {
         user: config.email.user,
         pass: config.email.pass,
       },
+      tls: {
+        rejectUnauthorized: false
+      }
     });
 
     // Don't call .verify() on startup if using dummy/missing credentials,

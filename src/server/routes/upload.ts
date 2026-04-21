@@ -11,10 +11,19 @@ const router = express.Router();
 const envCloudinaryUrl = process.env.CLOUDINARY_URL;
 
 if (envCloudinaryUrl) {
-  cloudinary.config({
-    cloudinary_url: envCloudinaryUrl
-  });
-  console.log('Cloudinary initialized via CLOUDINARY_URL env var.');
+  // Parse the URL manually because cloudinary.config({ cloudinary_url }) is failing for some SDK versions
+  const regex = /^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/;
+  const match = envCloudinaryUrl.match(regex);
+  if (match) {
+    cloudinary.config({
+      api_key: match[1],
+      api_secret: match[2],
+      cloud_name: match[3]
+    });
+    console.log('Cloudinary initialized by parsing CLOUDINARY_URL env var.');
+  } else {
+    cloudinary.config({ cloudinary_url: envCloudinaryUrl });
+  }
 } else {
   cloudinary.config({
     cloud_name: config.cloudinary.cloud_name,
