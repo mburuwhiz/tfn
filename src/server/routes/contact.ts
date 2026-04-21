@@ -46,14 +46,14 @@ router.get('/', authMiddleware, async (req, res) => {
 // Admin: Update ticket status and optionally send a reply
 router.patch('/:id', authMiddleware, async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id as string)) {
       return res.status(400).json({ message: 'Invalid ticket ID format' });
     }
 
     const { status, replyMessage } = req.body;
 
     // Find ticket first to send email if needed
-    const ticket = await Ticket.findById(req.params.id);
+    const ticket = await Ticket.findById(req.params.id as string);
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
     // Update status
@@ -79,7 +79,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   console.log('ATTEMPTING TO DELETE TICKET:', id);
   
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!mongoose.Types.ObjectId.isValid(id as string)) {
     return res.status(400).json({ message: 'Invalid ticket ID format' });
   }
 

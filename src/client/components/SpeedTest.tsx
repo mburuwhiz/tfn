@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Upload, Zap, Activity, RefreshCw } from 'lucide-react';
+import { Download, Upload, Activity, RefreshCw } from 'lucide-react';
 
 const SpeedTest = () => {
   const [status, setStatus] = useState<'idle' | 'testing' | 'complete'>('idle');

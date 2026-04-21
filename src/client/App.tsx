@@ -12,6 +12,7 @@ import AdminNews from './pages/admin/News.tsx';
 import AdminPlans from './pages/admin/AdminPlans.tsx';
 import AdminTickets from './pages/admin/Tickets.tsx';
 import AdminGallery from './pages/admin/Gallery.tsx';
+import NotFound from './pages/NotFound.tsx';
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="news" element={<News />} />
             <Route path="gallery" element={<Gallery />} />
             <Route path="contact" element={<Contact />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
